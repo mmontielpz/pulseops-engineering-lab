@@ -2,32 +2,33 @@
 
 ## Objective
 
-Add incident ownership: an incident can be assigned to an owner, and the
-assignment is visible end-to-end (database to UI).
+Implement the incident status lifecycle as an enforced state machine.
 
 ## Relevant Context
 
-- backend/app/models.py (Incident.owner already exists)
-- backend/app/repositories/incident_repository.py
-- backend/app/services/incident_service.py
+- CLAUDE.md (lifecycle + invariants already documented there)
+- backend/app/models.py (Status enum)
+- backend/app/services/incident_service.py (assign_owner lives here)
 - backend/app/api/incidents.py
 - frontend/src/pages/IncidentDetail.tsx
-- frontend/src/api/incidents.ts
 
 ## Scope
 
-PATCH /incidents/{id}/assign, service method, frontend assignment control.
+PATCH /incidents/{id}/status with transition validation; frontend status control.
 
 ## Constraints
 
-No status/lifecycle logic. No audit timeline. Validation in service layer only.
+Lifecycle: OPEN -> INVESTIGATING -> RESOLVED -> CLOSED, no skipping.
+P1 incidents need an owner before entering INVESTIGATING.
+No audit timeline yet (S003). Validation in service layer only.
 
 ## Acceptance Criteria
 
-- Assignment persists via API
-- Empty/whitespace owner rejected (422)
-- Frontend can assign and see it persist
+- Valid transitions succeed in order
+- Invalid transitions (e.g. OPEN -> CLOSED) rejected with 422
+- P1 without owner cannot enter INVESTIGATING; succeeds once owner assigned
 - Existing tests pass unmodified
+- At least one negative-path test per rule
 - make verify passes
 
 ## Verification
@@ -36,13 +37,4 @@ make verify
 
 ## Current State / Handoff
 
-S001 complete and verified.
-
-- `make verify`: PASS (backend 16 tests, frontend 5 tests, lint clean,
-  types clean, build clean). Took 3 verification attempts: 2 rework
-  iterations for real findings (ruff: unused import + `assert False`
-  anti-pattern; tsc: unused mock parameter), 1 final clean pass.
-- Runtime smoke test: created an incident, assigned an owner via
-  `PATCH /incidents/{id}/assign`, confirmed persistence via `GET`,
-  confirmed whitespace-only owner is rejected with 422.
-- Next: S002 (`docs/slices/S002-STATUS-WORKFLOW.md`).
+In progress.
