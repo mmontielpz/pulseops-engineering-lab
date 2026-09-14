@@ -20,6 +20,10 @@ class AssignOwnerRequest(BaseModel):
     owner: str = Field(min_length=1, max_length=100)
 
 
+class ChangeStatusRequest(BaseModel):
+    status: Status
+
+
 class IncidentOut(BaseModel):
     id: str
     title: str

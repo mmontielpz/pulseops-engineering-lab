@@ -1,10 +1,17 @@
 import { useEffect, useState } from 'react'
-import { assignOwner, getIncident } from '../api/incidents'
-import type { Incident } from '../types/incident'
+import { assignOwner, changeStatus, getIncident } from '../api/incidents'
+import type { Incident, Status } from '../types/incident'
 
 interface Props {
   incidentId: string
   onBack: () => void
+}
+
+const NEXT_STATUS: Record<Status, Status | null> = {
+  OPEN: 'INVESTIGATING',
+  INVESTIGATING: 'RESOLVED',
+  RESOLVED: 'CLOSED',
+  CLOSED: null,
 }
 
 export function IncidentDetail({ incidentId, onBack }: Props) {
@@ -12,6 +19,7 @@ export function IncidentDetail({ incidentId, onBack }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [ownerInput, setOwnerInput] = useState('')
   const [assigning, setAssigning] = useState(false)
+  const [advancing, setAdvancing] = useState(false)
 
   useEffect(() => {
     getIncident(incidentId)
@@ -36,8 +44,26 @@ export function IncidentDetail({ incidentId, onBack }: Props) {
     }
   }
 
+  async function handleAdvance() {
+    if (!incident) return
+    const next = NEXT_STATUS[incident.status]
+    if (!next) return
+    setError(null)
+    setAdvancing(true)
+    try {
+      const updated = await changeStatus(incidentId, next)
+      setIncident(updated)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setAdvancing(false)
+    }
+  }
+
   if (error && !incident) return <p role="alert">Error: {error}</p>
   if (!incident) return <p>Loading...</p>
+
+  const next = NEXT_STATUS[incident.status]
 
   return (
     <div className="incident-detail">
@@ -56,9 +82,10 @@ export function IncidentDetail({ incidentId, onBack }: Props) {
         <dd>{incident.description || 'No description provided.'}</dd>
       </dl>
 
+      {error && <p role="alert">{error}</p>}
+
       <form onSubmit={handleAssign} className="assign-form">
         <h3>Assign Owner</h3>
-        {error && <p role="alert">{error}</p>}
         <label>
           Owner
           <input
@@ -72,8 +99,18 @@ export function IncidentDetail({ incidentId, onBack }: Props) {
         </button>
       </form>
 
-      {/* Status workflow control (S002) and the audit timeline (S003)
-          are intentionally not implemented yet. */}
+      <div className="status-control">
+        <h3>Status</h3>
+        {next ? (
+          <button onClick={handleAdvance} disabled={advancing}>
+            {advancing ? 'Updating...' : `Advance to ${next}`}
+          </button>
+        ) : (
+          <p>This incident is closed.</p>
+        )}
+      </div>
+
+      {/* The audit timeline (S003) is intentionally not implemented yet. */}
     </div>
   )
 }

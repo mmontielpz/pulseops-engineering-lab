@@ -37,4 +37,13 @@ make verify
 
 ## Current State / Handoff
 
-In progress.
+S002 complete and verified.
+
+- `make verify`: PASS (backend 28 tests, frontend 5 tests, lint clean,
+  types clean, build clean). Took 2 verification attempts: 1 rework
+  iteration for a real ruff line-length finding, 1 clean pass.
+- Runtime smoke test: confirmed OPEN->CLOSED rejected (422), P1 without
+  owner rejected from entering INVESTIGATING (422), same P1 succeeds
+  after assignment (200), and a full OPEN->INVESTIGATING->RESOLVED->
+  CLOSED lifecycle succeeds on a P3 incident.
+- Next: S003 (`docs/slices/S003-AUDIT-TIMELINE.md`).

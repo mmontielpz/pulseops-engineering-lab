@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.repositories.incident_repository import IncidentRepository
-from app.schemas import AssignOwnerRequest, IncidentCreate, IncidentOut
+from app.schemas import AssignOwnerRequest, ChangeStatusRequest, IncidentCreate, IncidentOut
 from app.services.incident_service import DomainError, IncidentService
 
 router = APIRouter(prefix="/incidents", tags=["incidents"])
@@ -51,6 +51,21 @@ def assign_owner(
 ) -> IncidentOut:
     try:
         incident = service.assign_owner(incident_id, payload.owner)
+    except DomainError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail="incident not found") from exc
+    return IncidentOut.model_validate(incident)
+
+
+@router.patch("/{incident_id}/status", response_model=IncidentOut)
+def change_status(
+    incident_id: str,
+    payload: ChangeStatusRequest,
+    service: IncidentService = Depends(get_service),
+) -> IncidentOut:
+    try:
+        incident = service.change_status(incident_id, payload.status)
     except DomainError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except LookupError as exc:

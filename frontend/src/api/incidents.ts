@@ -37,3 +37,12 @@ export async function assignOwner(id: string, owner: string): Promise<Incident> 
   })
   return handle<Incident>(res)
 }
+
+export async function changeStatus(id: string, status: string): Promise<Incident> {
+  const res = await fetch(`${BASE}/${id}/status`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status }),
+  })
+  return handle<Incident>(res)
+}
