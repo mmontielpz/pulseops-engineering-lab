@@ -7,7 +7,7 @@ import datetime
 
 from pydantic import BaseModel, Field
 
-from app.models import Severity, Status
+from app.models import EventType, Severity, Status
 
 
 class IncidentCreate(BaseModel):
@@ -33,5 +33,16 @@ class IncidentOut(BaseModel):
     owner: str | None
     created_at: datetime.datetime
     updated_at: datetime.datetime
+
+    model_config = {"from_attributes": True}
+
+
+class IncidentEventOut(BaseModel):
+    id: str
+    incident_id: str
+    event_type: EventType
+    previous_value: str | None
+    new_value: str
+    created_at: datetime.datetime
 
     model_config = {"from_attributes": True}

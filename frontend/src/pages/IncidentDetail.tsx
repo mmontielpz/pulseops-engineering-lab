@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { assignOwner, changeStatus, getIncident } from '../api/incidents'
-import type { Incident, Status } from '../types/incident'
+import { assignOwner, changeStatus, getIncident, listEvents } from '../api/incidents'
+import type { Incident, IncidentEvent, Status } from '../types/incident'
 
 interface Props {
   incidentId: string
@@ -14,21 +14,38 @@ const NEXT_STATUS: Record<Status, Status | null> = {
   CLOSED: null,
 }
 
+function describeEvent(event: IncidentEvent): string {
+  if (event.event_type === 'ASSIGNED') {
+    return event.previous_value
+      ? `Reassigned from ${event.previous_value} to ${event.new_value}`
+      : `Assigned to ${event.new_value}`
+  }
+  return `Status changed from ${event.previous_value} to ${event.new_value}`
+}
+
 export function IncidentDetail({ incidentId, onBack }: Props) {
   const [incident, setIncident] = useState<Incident | null>(null)
+  const [events, setEvents] = useState<IncidentEvent[]>([])
   const [error, setError] = useState<string | null>(null)
   const [ownerInput, setOwnerInput] = useState('')
   const [assigning, setAssigning] = useState(false)
   const [advancing, setAdvancing] = useState(false)
 
-  useEffect(() => {
+  function reload() {
     getIncident(incidentId)
       .then((data) => {
         setIncident(data)
         setOwnerInput(data.owner ?? '')
       })
       .catch((err) => setError(String(err.message ?? err)))
-  }, [incidentId])
+    listEvents(incidentId)
+      .then(setEvents)
+      .catch(() => {
+        /* timeline is supplementary - don't block the page on it */
+      })
+  }
+
+  useEffect(reload, [incidentId])
 
   async function handleAssign(e: React.FormEvent) {
     e.preventDefault()
@@ -37,6 +54,7 @@ export function IncidentDetail({ incidentId, onBack }: Props) {
     try {
       const updated = await assignOwner(incidentId, ownerInput)
       setIncident(updated)
+      listEvents(incidentId).then(setEvents)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
@@ -53,6 +71,7 @@ export function IncidentDetail({ incidentId, onBack }: Props) {
     try {
       const updated = await changeStatus(incidentId, next)
       setIncident(updated)
+      listEvents(incidentId).then(setEvents)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
@@ -110,7 +129,23 @@ export function IncidentDetail({ incidentId, onBack }: Props) {
         )}
       </div>
 
-      {/* The audit timeline (S003) is intentionally not implemented yet. */}
+      <div className="timeline">
+        <h3>Timeline</h3>
+        {events.length === 0 ? (
+          <p>No events yet.</p>
+        ) : (
+          <ul>
+            {events.map((event) => (
+              <li key={event.id}>
+                <span className="timeline-time">
+                  {new Date(event.created_at).toLocaleTimeString()}
+                </span>{' '}
+                {describeEvent(event)}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   )
 }

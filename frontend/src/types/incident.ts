@@ -17,3 +17,14 @@ export interface IncidentCreateInput {
   description: string
   severity: Severity
 }
+
+export type EventType = 'ASSIGNED' | 'STATUS_CHANGED'
+
+export interface IncidentEvent {
+  id: string
+  incident_id: string
+  event_type: EventType
+  previous_value: string | null
+  new_value: string
+  created_at: string
+}

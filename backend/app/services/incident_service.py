@@ -7,7 +7,7 @@ workshop slices S001-S003.
 """
 from __future__ import annotations
 
-from app.models import Incident, Severity, Status
+from app.models import EventType, Incident, IncidentEvent, Severity, Status
 from app.repositories.incident_repository import IncidentRepository
 
 # The lifecycle is linear: an incident can only move to the next state.
@@ -55,8 +55,16 @@ class IncidentService:
         incident = self.repo.get(incident_id)
         if incident is None:
             raise LookupError(incident_id)
+
+        previous_owner = incident.owner
         incident.owner = owner.strip()
-        return self.repo.save(incident)
+        event = IncidentEvent(
+            incident_id=incident.id,
+            event_type=EventType.ASSIGNED,
+            previous_value=previous_owner,
+            new_value=incident.owner,
+        )
+        return self.repo.save_with_event(incident, event)
 
     def change_status(self, incident_id: str, new_status: Status) -> Incident:
         incident = self.repo.get(incident_id)
@@ -81,5 +89,15 @@ class IncidentService:
                 "INVESTIGATING"
             )
 
+        previous_status = incident.status
         incident.status = new_status
-        return self.repo.save(incident)
+        event = IncidentEvent(
+            incident_id=incident.id,
+            event_type=EventType.STATUS_CHANGED,
+            previous_value=previous_status.value,
+            new_value=new_status.value,
+        )
+        return self.repo.save_with_event(incident, event)
+
+    def list_events(self, incident_id: str) -> list[IncidentEvent]:
+        return self.repo.list_events(incident_id)

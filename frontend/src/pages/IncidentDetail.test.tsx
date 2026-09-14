@@ -18,9 +18,12 @@ describe('IncidentDetail', () => {
   beforeEach(() => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(async (_url: string, init?: RequestInit) => {
+      vi.fn(async (url: string, init?: RequestInit) => {
         if (init?.method === 'PATCH') {
           return { ok: true, json: async () => ({ ...sample, owner: 'steven' }) }
+        }
+        if (url.endsWith('/events')) {
+          return { ok: true, json: async () => [] }
         }
         return { ok: true, json: async () => sample }
       }) as unknown as typeof fetch,

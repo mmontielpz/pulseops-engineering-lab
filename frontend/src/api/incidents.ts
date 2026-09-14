@@ -1,4 +1,4 @@
-import type { Incident, IncidentCreateInput } from '../types/incident'
+import type { Incident, IncidentCreateInput, IncidentEvent } from '../types/incident'
 
 const BASE = '/incidents'
 
@@ -45,4 +45,9 @@ export async function changeStatus(id: string, status: string): Promise<Incident
     body: JSON.stringify({ status }),
   })
   return handle<Incident>(res)
+}
+
+export async function listEvents(id: string): Promise<IncidentEvent[]> {
+  const res = await fetch(`${BASE}/${id}/events`)
+  return handle<IncidentEvent[]>(res)
 }

@@ -54,3 +54,28 @@ class Incident(Base):
     updated_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), default=_now, onupdate=_now
     )
+
+
+class EventType(enum.StrEnum):
+    ASSIGNED = "ASSIGNED"
+    STATUS_CHANGED = "STATUS_CHANGED"
+
+
+class IncidentEvent(Base):
+    """An immutable audit record of a meaningful incident change.
+
+    Created in the same database transaction as the incident mutation it
+    describes (see IncidentService) - see S003's slice spec for why that
+    matters.
+    """
+
+    __tablename__ = "incident_events"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
+    incident_id: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    event_type: Mapped[EventType] = mapped_column(Enum(EventType), nullable=False)
+    previous_value: Mapped[str | None] = mapped_column(String, nullable=True)
+    new_value: Mapped[str] = mapped_column(String, nullable=False)
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True), default=_now
+    )

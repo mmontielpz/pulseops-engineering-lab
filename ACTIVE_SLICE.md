@@ -40,4 +40,22 @@ make verify
 
 ## Current State / Handoff
 
-In progress.
+S003 complete and verified.
+
+- `make verify`: PASS (backend 36 tests, frontend 5 tests, lint clean,
+  types clean, build clean). Took 3 verification attempts: 2 rework
+  iterations for real findings (ruff: blind `except Exception` in the
+  atomicity test needed narrowing to `IntegrityError`; tsc: forgot to
+  export the `IncidentEvent` type on the frontend, caught only at the
+  build step, not by lint or tests), 1 clean pass.
+- The atomicity test (`test_atomic_failure_rolls_back_incident_change`)
+  genuinely forces an `IntegrityError` on the event write and asserts
+  the paired incident mutation did not leak through - not a
+  tautological test that only exercises the happy path.
+- Runtime smoke test: assigned + transitioned a P1 incident via a live
+  server, fetched `/incidents/{id}/events`, confirmed both events
+  recorded in correct chronological order with correct previous/new
+  values.
+- Workshop slices S001-S003 are now complete. Next: the workshop's
+  Context-Kill and failure-recovery exercises (see
+  AICA-005-PULSEOPS-BENCHMARK.md once written), not a new slice.
