@@ -40,3 +40,12 @@ class IncidentService:
             status=Status.OPEN,
         )
         return self.repo.add(incident)
+
+    def assign_owner(self, incident_id: str, owner: str) -> Incident:
+        if not owner.strip():
+            raise DomainError("owner must not be empty")
+        incident = self.repo.get(incident_id)
+        if incident is None:
+            raise LookupError(incident_id)
+        incident.owner = owner.strip()
+        return self.repo.save(incident)

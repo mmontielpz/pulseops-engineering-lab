@@ -2,40 +2,47 @@
 
 ## Objective
 
-None yet - this is the workshop starting commit. The first slice is
-`docs/slices/S001-INCIDENT-ASSIGNMENT.md`.
+Add incident ownership: an incident can be assigned to an owner, and the
+assignment is visible end-to-end (database to UI).
 
 ## Relevant Context
 
-N/A
+- backend/app/models.py (Incident.owner already exists)
+- backend/app/repositories/incident_repository.py
+- backend/app/services/incident_service.py
+- backend/app/api/incidents.py
+- frontend/src/pages/IncidentDetail.tsx
+- frontend/src/api/incidents.ts
 
 ## Scope
 
-N/A
+PATCH /incidents/{id}/assign, service method, frontend assignment control.
 
 ## Constraints
 
-N/A
+No status/lifecycle logic. No audit timeline. Validation in service layer only.
 
 ## Acceptance Criteria
 
-N/A
+- Assignment persists via API
+- Empty/whitespace owner rejected (422)
+- Frontend can assign and see it persist
+- Existing tests pass unmodified
+- make verify passes
 
 ## Verification
 
-N/A
+make verify
 
 ## Current State / Handoff
 
-Baseline application is complete and verified:
+S001 complete and verified.
 
-- `make verify` passes (backend lint/types/tests, frontend
-  lint/tests/build).
-- Incident list, incident detail, and incident creation work
-  end-to-end (frontend to database).
-- No assignment, status-workflow, or audit-timeline behavior exists
-  yet - these are `S001`, `S002`, and `S003`.
-
-To start the workshop: read `docs/slices/S001-INCIDENT-ASSIGNMENT.md`,
-replace this file's contents with that slice's Objective / Context /
-Scope / Constraints / Acceptance Criteria / Verification, and begin.
+- `make verify`: PASS (backend 16 tests, frontend 5 tests, lint clean,
+  types clean, build clean). Took 3 verification attempts: 2 rework
+  iterations for real findings (ruff: unused import + `assert False`
+  anti-pattern; tsc: unused mock parameter), 1 final clean pass.
+- Runtime smoke test: created an incident, assigned an owner via
+  `PATCH /incidents/{id}/assign`, confirmed persistence via `GET`,
+  confirmed whitespace-only owner is rejected with 422.
+- Next: S002 (`docs/slices/S002-STATUS-WORKFLOW.md`).

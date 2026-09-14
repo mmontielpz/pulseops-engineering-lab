@@ -28,3 +28,12 @@ export async function createIncident(input: IncidentCreateInput): Promise<Incide
   })
   return handle<Incident>(res)
 }
+
+export async function assignOwner(id: string, owner: string): Promise<Incident> {
+  const res = await fetch(`${BASE}/${id}/assign`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ owner }),
+  })
+  return handle<Incident>(res)
+}

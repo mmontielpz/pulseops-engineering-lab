@@ -54,7 +54,8 @@ header h1 {
 .severity-p2 { background: #fef0e6; color: #b54708; }
 .severity-p3, .severity-p4 { background: #e6e9ee; color: #475467; }
 
-.new-incident-form {
+.new-incident-form,
+.assign-form {
   background: white;
   padding: 1rem 1.2rem;
   margin-bottom: 1.5rem;
@@ -69,7 +70,8 @@ header h1 {
 
 .new-incident-form input,
 .new-incident-form textarea,
-.new-incident-form select {
+.new-incident-form select,
+.assign-form input {
   display: block;
   width: 100%;
   margin-top: 0.2rem;

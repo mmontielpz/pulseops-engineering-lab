@@ -16,6 +16,10 @@ class IncidentCreate(BaseModel):
     severity: Severity
 
 
+class AssignOwnerRequest(BaseModel):
+    owner: str = Field(min_length=1, max_length=100)
+
+
 class IncidentOut(BaseModel):
     id: str
     title: str

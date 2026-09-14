@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getIncident } from '../api/incidents'
+import { assignOwner, getIncident } from '../api/incidents'
 import type { Incident } from '../types/incident'
 
 interface Props {
@@ -10,14 +10,33 @@ interface Props {
 export function IncidentDetail({ incidentId, onBack }: Props) {
   const [incident, setIncident] = useState<Incident | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [ownerInput, setOwnerInput] = useState('')
+  const [assigning, setAssigning] = useState(false)
 
   useEffect(() => {
     getIncident(incidentId)
-      .then(setIncident)
+      .then((data) => {
+        setIncident(data)
+        setOwnerInput(data.owner ?? '')
+      })
       .catch((err) => setError(String(err.message ?? err)))
   }, [incidentId])
 
-  if (error) return <p role="alert">Error: {error}</p>
+  async function handleAssign(e: React.FormEvent) {
+    e.preventDefault()
+    setError(null)
+    setAssigning(true)
+    try {
+      const updated = await assignOwner(incidentId, ownerInput)
+      setIncident(updated)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setAssigning(false)
+    }
+  }
+
+  if (error && !incident) return <p role="alert">Error: {error}</p>
   if (!incident) return <p>Loading...</p>
 
   return (
@@ -36,9 +55,25 @@ export function IncidentDetail({ incidentId, onBack }: Props) {
         <dt>Description</dt>
         <dd>{incident.description || 'No description provided.'}</dd>
       </dl>
-      {/* Assignment control (S001), status workflow control (S002), and
-          the audit timeline (S003) are intentionally not implemented yet -
-          these are the workshop's hands-on slices. */}
+
+      <form onSubmit={handleAssign} className="assign-form">
+        <h3>Assign Owner</h3>
+        {error && <p role="alert">{error}</p>}
+        <label>
+          Owner
+          <input
+            value={ownerInput}
+            onChange={(e) => setOwnerInput(e.target.value)}
+            placeholder="e.g. steven"
+          />
+        </label>
+        <button type="submit" disabled={assigning}>
+          {assigning ? 'Assigning...' : 'Assign'}
+        </button>
+      </form>
+
+      {/* Status workflow control (S002) and the audit timeline (S003)
+          are intentionally not implemented yet. */}
     </div>
   )
 }
